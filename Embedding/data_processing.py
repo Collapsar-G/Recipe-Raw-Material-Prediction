@@ -1,7 +1,8 @@
 import csv
 from config import train_data_path
 
-def data_read():
+
+def data_read():  # 从文件中读取数据
     train_data = []
     with open(train_data_path, encoding="utf8") as csvfile:
         csv_reader = csv.reader(csvfile)  # 使用csv.reader读取csvfile中的文件
@@ -13,7 +14,7 @@ def data_read():
     return train_data
 
 
-def data_split(datas):
+def data_split(datas):  # 将读取的数据处理为字典列表
     result = []
     for data in datas:
         dst = {}

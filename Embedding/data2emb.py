@@ -1,7 +1,7 @@
 from data_processing import data_split, data_read
 
 
-def get_all_ingredients(data):
+def get_all_ingredients(data):  # 获取数据中的全部食材
     ingredients = set()
     for d in data:
         ingredient_list = d.keys()
@@ -10,17 +10,17 @@ def get_all_ingredients(data):
     return ingredients
 
 
-def datas2emb():
+def get_datas():  # 调用函数读取训练数据
     datas = data_read()
     train_data = data_split(datas)
     return train_data
 
 
-def embedding():
+def embedding():  # 将训练数据转化为embedding
     return
 
 
 if __name__ == '__main__':
-    data = datas2emb()
+    data = get_datas()
     ingredients = get_all_ingredients(data)
     print(len(ingredients))
