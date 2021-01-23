@@ -24,7 +24,7 @@ def data_split(datas):  # 将读取的数据处理为字典列表
             dec = data[index].split('#')
             dst[dec[0]] = dec[1]
         # print(dst)
-        result.append(dst)
+        result.append(dst) 
     # print(result)
     return result
 
