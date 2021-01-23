@@ -1,5 +1,5 @@
 import csv
-from config import train_data_path
+from Embedding.config import train_data_path
 
 def data_read():
     train_data = []

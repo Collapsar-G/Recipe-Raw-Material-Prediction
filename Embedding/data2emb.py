@@ -1,4 +1,4 @@
-from data_processing import data_split, data_read
+from Embedding.data_processing import data_split, data_read
 
 
 def get_all_ingredients(data):
