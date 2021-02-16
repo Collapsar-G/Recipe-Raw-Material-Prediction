@@ -2,11 +2,14 @@ import csv
 from config import train_data_path
 import numpy as np
 import re
+from pattern3.text.en import singularize
 
 materials = []
 NotIn = []  # 测试集中训练集中没有的
 material_index = {}  # 食材的标号 例如:{eggs:0,...}
 material_sum = {}  # 对应食材标号的食材质量总和
+total1 = 0
+total2 = 0
 
 
 def data_read():  # 从文件中读取数据
@@ -30,9 +33,12 @@ def data_split(datas):  # 将读取的数据处理为字典列表
         for index in range(2, len(data)):
             # print(index)
             dec = data[index].split('#')
-            if dec[0] not in materials:
-                materials.append(dec[0])
-            dst[dec[0]] = dec[1]
+            temp = dec[0]
+            temp = re.sub('fresh|frozen|large|small|chunks', '', temp)  # 去掉部分无关紧要形容词
+            temp = singularize(temp)
+            if temp not in materials:
+                materials.append(temp)
+            dst[temp] = dec[1]
         # print(dst)
         result.append(dst)
         # print(result)
@@ -111,7 +117,8 @@ def get_material_information(data):  # 获取食材信息
                     if re.search('T$', sav):
                         temp = float(re.sub('T', '', sav)) * 15
                     else:
-                        break
+                        recipe[material] = ''
+                        continue
                 elif '¾' in recipe[material]:
                     temp = 0
                 elif '½' in recipe[material]:
@@ -126,17 +133,27 @@ def get_material_information(data):  # 获取食材信息
                     temp = 0
                 else:
                     temp = float(recipe[material])
-            # print(temp)
+            if recipe[material]:
+                recipe[material] = temp
             if material not in material_index:
                 material_index[material] = index
                 index += 1
                 material_sum[material] = temp
             else:
                 material_sum[material] += temp
-    print(material_sum)
+    print(index)
+
+
+def normalize(data):  # 归一化
+    for recipe in data:
+        for material in recipe:
+            # print(recipe[material])
+            if recipe[material]:
+                recipe[material] = recipe[material] / material_sum[material]
 
 
 if __name__ == '__main__':
     datas = data_read()
     train_data = data_split(datas)
     get_material_information(train_data)
+    normalize(train_data)
