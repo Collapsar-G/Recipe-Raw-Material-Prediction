@@ -18,6 +18,13 @@ def data_read():  # 从文件中读取数据
         csv_reader = csv.reader(csvfile)  # 使用csv.reader读取csvfile中的文件
         # birth_header = next(csv_reader)  # 读取第一行每一列的标题
         for row in csv_reader:  # 将csv 文件中的数据保存到birth_data中
+            for h in range(len(row)):
+                row[h] = row[h].lower()
+                try:
+                    row[h] = row[h].replace('®', '')
+                except:
+                    continue
+
             train_data.append(row)
             # print(row)
 
@@ -142,6 +149,7 @@ def get_material_information(data):  # 获取食材信息
             else:
                 material_sum[material] += temp
     print(index)
+    return material_index,material_sum
 
 
 def normalize(data):  # 归一化
@@ -153,6 +161,7 @@ def normalize(data):  # 归一化
 
 
 if __name__ == '__main__':
+
     datas = data_read()
     train_data = data_split(datas)
     get_material_information(train_data)
