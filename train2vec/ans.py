@@ -6,6 +6,8 @@
 
 __author__ = 'Collapsar-G'
 
+import math
+
 import numpy as np
 from test import data_split as test_data_split, get_data_test
 from getdata import data_read as train_data_read, data_split as train_data_split
@@ -17,6 +19,8 @@ material_index = {}  # 食材的标号 例如:{eggs:0,...}
 material_sum = {}  # 对应食材标号的食材质量总和
 material_count = {}
 material_evg = {}
+material_error = []
+material_th = {}
 
 
 def get_material_information(data):
@@ -98,17 +102,39 @@ def get_material_information(data):
             if recipe[material]:
                 recipe[material] = temp
             if material not in material_index:
-                material_index[material] = index
+                material_index[material] = [(key, temp)]
                 index += 1
                 material_sum[material] = temp
                 material_count[material] = 1.
             else:
+                material_index[material].append((key, temp))
                 material_sum[material] += temp
                 material_count[material] += 1.
     for key in material_count:
         material_evg[key] = material_sum[key] / material_count[key]
+        sum = 0
+        for material in material_index[key]:
+            sum += (material[1] - material_evg[key]) ** 2
+        material_th[key] = math.sqrt(sum)
     print(index)
-    return material_index, material_sum, material_evg
+    return data, material_index, material_sum, material_evg, material_th, material_count
+
+
+def clean_data(data, material_index, material_sum, material_evg, material_th, material_count):
+    for key in material_index:
+        for material in material_index[key]:
+            if material[1] > 1000:
+                if (material_evg[key] - material_th[key] * 3) <= material[1] <= (
+                        material_evg[key] + material_th[key] * 3):
+                    material_error.append(material[0])
+                    material_sum[key] -= material[1]
+                    material_count[key] -= 1
+    for key in material_sum:
+        if material_count[key] != 0:
+            material_evg[key] = material_sum[key] / material_count[key]
+        else:
+            material_evg[key] = 0
+    return material_sum, material_error
 
 
 if __name__ == "__main__":
@@ -119,13 +145,15 @@ if __name__ == "__main__":
     file.close()
     data_test, name_test, id_test = test_data_split(get_data_test())
     data_train, name_train, id_train = train_data_split(train_data_read())
-    material_index, material_sum, material_evg = get_material_information(data_train)
-
+    data_train, material_index, material_sum, material_evg, material_th, material_count = get_material_information(
+        data_train)
+    material_sum, material_error = clean_data(data_train, material_index, material_sum, material_evg, material_th,
+                                              material_count)
     similar_dec = {}
     for key in similar_test:
         temp = []
         for i in range(len(similar_test[key])):
-            if similar_test[key][i][1] >= 0.9:
+            if (similar_test[key][i][1] >= 0.9) & (similar_test[key][i][0] not in material_error):
                 temp.append(similar_test[key][i][0])
         similar_dec[key] = temp
     ans = []
