@@ -1,9 +1,9 @@
 # Machine-learning
 SDU 18AI 机器学习-菜谱原料预测
 
-| Author |      |      |      |
-| :----: | :--: | :--: | ---- |
-| E-mail |      |      |      |
+| Author |    Collapsar-G    |      |      |
+| :----: | :---------------: | :--: | ---- |
+| E-mail | jinfei_gao@qq.com |      |      |
 
 ## 预计目标
 

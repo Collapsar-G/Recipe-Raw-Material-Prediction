@@ -39,6 +39,7 @@ def data_split(datas):  # 将读取的数据处理为字典列表
     result = {}
     id = {}
     name = {}
+    t = {}
     for i in range(len(datas)):
 
         data = datas[i]
@@ -50,20 +51,27 @@ def data_split(datas):  # 将读取的数据处理为字典列表
         for index in range(2, len(data)):
             # print(index)
             dec = data[index].split('#')
+            a = dec[0]
+            b= a 
+            b = singularize(b)
             temp = dec[0].lower()
             temp = re.sub('fresh|frozen|large|small|chunks', '', temp)  # 去掉部分无关紧要形容词
+
             temp = singularize(temp)
             if temp not in materials:
                 materials.append(temp)
             dst[temp] = dec[1]
-            ingredient[temp] = dec[0]
+            ingredient[dec[0]] = temp
+            if a != b:
+                t[a] = b
+                t[b] = a
         # print(dst)
         result[data[0]] = dst
         name[data[0]] = ingredient
         id[data[0]] = data[1]
         # print(result)
 
-    return result, name, id
+    return result, name, id, t
 
 
 def test_emb(data):
@@ -90,7 +98,7 @@ def test_emb(data):
 
 def test_data():
     print("test_data")
-    result, name, id = data_split(get_data_test())
+    result, name, id, t = data_split(get_data_test())
     data_emb = test_emb(result)
     recipe_emb = np.load("recipe_emb.npy", allow_pickle=True)
     print(recipe_emb)

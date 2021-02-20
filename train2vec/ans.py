@@ -6,6 +6,7 @@
 
 __author__ = 'Collapsar-G'
 
+import csv
 import math
 
 import numpy as np
@@ -14,6 +15,7 @@ from getdata import data_read as train_data_read, data_split as train_data_split
 import re
 from pattern3.text.en import singularize
 import json
+from pattern3.text.en import singularize
 
 material_index = {}  # 食材的标号 例如:{eggs:0,...}
 material_sum = {}  # 对应食材标号的食材质量总和
@@ -21,6 +23,8 @@ material_count = {}
 material_evg = {}
 material_error = []
 material_th = {}
+test_data_path = "./data/recipe3.csv"
+output_path = "./data/output.csv"
 
 
 def get_material_information(data):
@@ -120,6 +124,68 @@ def get_material_information(data):
     return data, material_index, material_sum, material_evg, material_th, material_count
 
 
+def read(path):
+    datas = []
+    with open(path, encoding="utf8") as csvfile:
+        csv_reader = csv.reader(csvfile)  # 使用csv.reader读取csvfile中的文件
+        # birth_header = next(csv_reader)  # 读取第一行每一列的标题
+        for row in csv_reader:  # 将csv 文件中的数据保存到birth_data中
+            # for h in range(len(row)):
+            #     # row[h] = row[h].lower()
+            #     try:
+            #         row[h] = row[h].replace('®', '')
+            #     except:
+            #         continue
+
+            datas.append(row)
+    result = {}
+    for i in range(len(datas)):
+
+        data = datas[i]
+        recipe = {}
+        # for data in datas:
+        dst = []
+        # print(len(data))
+        for index in range(2, len(data)):
+            # print(index)
+            dec = data[index].split('#')
+            temp = dec[0]
+            dst.append((temp, dec[1]))
+        result[data[0] + "," + data[1]] = dst
+    return result
+
+
+def readans(path):
+    datas = []
+    with open(path, encoding="utf8") as csvfile:
+        csv_reader = csv.reader(csvfile)  # 使用csv.reader读取csvfile中的文件
+        # birth_header = next(csv_reader)  # 读取第一行每一列的标题
+        for row in csv_reader:  # 将csv 文件中的数据保存到birth_data中
+            # for h in range(len(row)):
+            #     # row[h] = row[h].lower()
+            #     try:
+            #         row[h] = row[h].replace('®', '')
+            #     except:
+            #         continue
+
+            datas.append(row)
+    result = {}
+    for i in range(len(datas)):
+
+        data = datas[i]
+        recipe = {}
+        # for data in datas:
+        dst = {}
+        # print(len(data))
+        for index in range(2, len(data)):
+            # print(index)
+            dec = data[index].split('#')
+            temp = dec[0]
+            dst[temp] = dec[1]
+        result[data[0] + "," + data[1]] = dst
+    return result
+
+
 def clean_data(data, material_index, material_sum, material_evg, material_th, material_count):
     for key in material_index:
         for material in material_index[key]:
@@ -136,6 +202,7 @@ def clean_data(data, material_index, material_sum, material_evg, material_th, ma
             material_evg[key] = 0
     return material_sum, material_error
 
+
 def ans_data():
     print("ans_data")
     file = open('test.txt', 'r', encoding="UTF-8-sig")
@@ -143,13 +210,14 @@ def ans_data():
     similar_test = json.loads(js)
     print(len(similar_test.keys()))
     file.close()
-    data_test, name_test, id_test = test_data_split(get_data_test())
+    data_test, name_test, id_test,t = test_data_split(get_data_test())
     data_train, name_train, id_train = train_data_split(train_data_read())
     data_train, material_index, material_sum, material_evg, material_th, material_count = get_material_information(
         data_train)
     material_sum, material_error = clean_data(data_train, material_index, material_sum, material_evg, material_th,
                                               material_count)
     similar_dec = {}
+
     for key in similar_test:
         temp = []
         for i in range(len(similar_test[key])):
@@ -178,12 +246,45 @@ def ans_data():
                     data_test[key][ingredient] = material_evg[ingredient]
                 except:
                     data_test[key][ingredient] = "Null"
-            recipe += ',' + str(name_test[key][ingredient]) + "#" + str(data_test[key][ingredient])
+            # recipe += ',' + str(name_test[key][ingredient]) + "#" + str(data_test[key][ingredient])
+            recipe += ',' + str(ingredient) + "#" + str(data_test[key][ingredient])
 
         ans.append(recipe)
-    file = open('./data/recipe2.csv', 'a', encoding='utf-8')
+
+    file = open('./data/recipe2.csv', 'w', encoding='utf-8')
     for i in range(len(ans)):
         s = ans[i]
+        s = s + '\n'  # 去除单引号，逗号，每行末尾追加换行符
+        file.write(s)
+    file.close()
+    print("保存文件成功")
+    result = []
+    test_data = read(test_data_path)
+    ans = readans('./data/recipe2.csv')
+    for key in test_data:
+        recipe = str(key)
+        # print(key)
+        for i in range(len(test_data[key])):
+            # print("????????????????????????????????")
+            print(key, test_data[key][i][0])
+
+            ingredient = test_data[key][i][0].lower()
+            temp = re.sub('fresh|frozen|large|small|chunks', '', ingredient)
+            temp =singularize(temp)
+            print(temp)
+            # print(key, ans[key][temp])
+            try:
+                recipe += "," + str(test_data[key][i][0]) + "#" + str(ans[key][temp])
+            except:
+                try:
+                    # recipe += "," + str(test_data[key][i][0]) + "#" + str(ans[key][name_test[key.split(",")[0]][ingredient]])
+                    recipe += "," + str(test_data[key][i][0]) + "#" + str(ans[key][ingredient])
+                except:
+                    recipe += "," + str(test_data[key][i][0]) + "#" + str(ans[key][ingredient+"®"])
+        result.append(recipe)
+    file = open('./data/recipe2.csv', 'w', encoding='utf-8')
+    for i in range(len(result)):
+        s = result[i]
         s = s + '\n'  # 去除单引号，逗号，每行末尾追加换行符
         file.write(s)
     file.close()
@@ -191,4 +292,4 @@ def ans_data():
 
 
 if __name__ == "__main__":
-   ans_data()
+    ans_data()
