@@ -136,8 +136,8 @@ def clean_data(data, material_index, material_sum, material_evg, material_th, ma
             material_evg[key] = 0
     return material_sum, material_error
 
-
-if __name__ == "__main__":
+def ans_data():
+    print("ans_data")
     file = open('test.txt', 'r', encoding="UTF-8-sig")
     js = file.read()
     similar_test = json.loads(js)
@@ -188,3 +188,7 @@ if __name__ == "__main__":
         file.write(s)
     file.close()
     print("保存文件成功")
+
+
+if __name__ == "__main__":
+   ans_data()

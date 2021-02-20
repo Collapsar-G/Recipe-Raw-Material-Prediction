@@ -36,10 +36,6 @@ from collections import Counter
 import numpy as np
 import random
 
-random.seed(1)
-np.random.seed(1)
-torch.manual_seed(1)
-
 C = 3  # context window
 K = 15  # number of negative samples
 epochs = 2
@@ -47,20 +43,6 @@ MAX_VOCAB_SIZE = 5076
 EMBEDDING_SIZE = 200
 batch_size = 32
 lr = 0.2
-
-train_data, material_index, material_sum, name, id = get_data()
-text = []
-for key in train_data:
-    for ingredient in train_data[key]:
-        text.append(ingredient)
-
-ingredient_dict = dict(Counter(text).most_common(MAX_VOCAB_SIZE + 1))  # 得到食材字典表，key是食材，value是次数
-
-ingredient2idx = {ingredient: i for i, ingredient in enumerate(ingredient_dict.keys())}
-idx2ingredient = {i: ingredient for i, ingredient in enumerate(ingredient_dict.keys())}
-ingredient_counts = np.array([count for count in ingredient_dict.values()], dtype=np.float32)
-ingredient_freqs = ingredient_counts / np.sum(ingredient_counts)
-ingredient_freqs = ingredient_freqs ** (3. / 4.)
 
 
 class IngredientEmbeddingDataset(tud.Dataset):
@@ -99,10 +81,6 @@ class IngredientEmbeddingDataset(tud.Dataset):
             neg_ingredients = torch.multinomial(self.ingredient_freqs, K * pos_ingredients.shape[0], True)
 
         return center_ingredients, pos_ingredients, neg_ingredients
-
-
-dataset = IngredientEmbeddingDataset(text, ingredient2idx, ingredient_freqs)
-dataloader = tud.DataLoader(dataset, batch_size, shuffle=True)
 
 
 class EmbeddingModel(nn.Module):
@@ -145,30 +123,6 @@ class EmbeddingModel(nn.Module):
         return self.in_embed.weight.detach().cpu().numpy()
 
 
-model = EmbeddingModel(MAX_VOCAB_SIZE, EMBEDDING_SIZE)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-model.to(device)
-for e in range(3):
-    for i, (input_labels, pos_labels, neg_labels) in enumerate(dataloader):
-        input_labels = input_labels.long().to(device)
-        pos_labels = pos_labels.long().to(device)
-        neg_labels = neg_labels.long().to(device)
-
-        optimizer.zero_grad()
-        loss = model(input_labels, pos_labels, neg_labels).mean()
-        loss.backward()
-
-        optimizer.step()
-
-        if i % 100 == 0:
-            print('epoch', e, 'iteration', i, loss.item())
-
-embedding_weights = model.input_embedding()
-torch.save(model.state_dict(), "embedding-{}.th".format(EMBEDDING_SIZE))
-
-
 def find_nearest(word):
     index = ingredient2idx[word]
     embedding = embedding_weights[index]
@@ -176,7 +130,57 @@ def find_nearest(word):
     return embedding
 
 
-result_dict = {}
-for key in ingredient_dict.keys():
-    result_dict[key] = find_nearest(key)
-    np.save("ingredient_emb.npy", result_dict)  # 将生成的向量保存在字典文件中
+def train_data():
+    print("train_data")
+    random.seed(1)
+    np.random.seed(1)
+    torch.manual_seed(1)
+
+    train_data, material_index, material_sum, name, id = get_data()
+    text = []
+    for key in train_data:
+        for ingredient in train_data[key]:
+            text.append(ingredient)
+
+    ingredient_dict = dict(Counter(text).most_common(MAX_VOCAB_SIZE + 1))  # 得到食材字典表，key是食材，value是次数
+
+    ingredient2idx = {ingredient: i for i, ingredient in enumerate(ingredient_dict.keys())}
+    idx2ingredient = {i: ingredient for i, ingredient in enumerate(ingredient_dict.keys())}
+    ingredient_counts = np.array([count for count in ingredient_dict.values()], dtype=np.float32)
+    ingredient_freqs = ingredient_counts / np.sum(ingredient_counts)
+    ingredient_freqs = ingredient_freqs ** (3. / 4.)
+
+    dataset = IngredientEmbeddingDataset(text, ingredient2idx, ingredient_freqs)
+    dataloader = tud.DataLoader(dataset, batch_size, shuffle=True)
+
+    model = EmbeddingModel(MAX_VOCAB_SIZE, EMBEDDING_SIZE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    model.to(device)
+    for e in range(3):
+        for i, (input_labels, pos_labels, neg_labels) in enumerate(dataloader):
+            input_labels = input_labels.long().to(device)
+            pos_labels = pos_labels.long().to(device)
+            neg_labels = neg_labels.long().to(device)
+
+            optimizer.zero_grad()
+            loss = model(input_labels, pos_labels, neg_labels).mean()
+            loss.backward()
+
+            optimizer.step()
+
+            if i % 100 == 0:
+                print('epoch', e, 'iteration', i, loss.item())
+
+    embedding_weights = model.input_embedding()
+    torch.save(model.state_dict(), "embedding-{}.th".format(EMBEDDING_SIZE))
+
+    result_dict = {}
+    for key in ingredient_dict.keys():
+        result_dict[key] = find_nearest(key)
+        np.save("ingredient_emb.npy", result_dict)  # 将生成的向量保存在字典文件中
+
+
+if __name__ == "__main__":
+    train_data()

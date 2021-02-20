@@ -11,7 +11,7 @@ import json
 
 import torch
 
-from config import train_data_path
+
 import numpy as np
 import re
 from pattern3.text.en import singularize
@@ -22,7 +22,7 @@ material_index = {}  # 食材的标号 例如:{eggs:0,...}
 material_sum = {}  # 对应食材标号的食材质量总和
 total1 = 0
 total2 = 0
-
+train_data_path = '../data/recipe1.csv'
 
 def data_read():  # 从文件中读取数据
     train_data = []

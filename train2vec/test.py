@@ -88,11 +88,12 @@ def test_emb(data):
     return data_emb
 
 
-if __name__ == "__main__":
+def test_data():
+    print("test_data")
     result, name, id = data_split(get_data_test())
     data_emb = test_emb(result)
     recipe_emb = np.load("recipe_emb.npy", allow_pickle=True)
-    # print(recipe_emb)
+    print(recipe_emb)
     emb_recipe = recipe_emb.item()
     similarly = {}
     for key in data_emb:
@@ -105,3 +106,7 @@ if __name__ == "__main__":
     file = open('test.txt', 'w', encoding="UTF-8-sig")  # 用pandas读写会产生无用的转义字符引起报错，所以采用json读写
     file.write(js)
     file.close()
+
+
+if __name__ == "__main__":
+    test_data()
